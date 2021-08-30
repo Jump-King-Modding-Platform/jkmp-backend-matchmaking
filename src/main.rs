@@ -1,5 +1,5 @@
 use futures::{SinkExt, StreamExt};
-use std::{net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{mpsc, Mutex},
@@ -16,7 +16,11 @@ mod state;
 use state::State;
 
 mod client;
-use client::Client;
+
+mod handlers;
+use handlers::MessageHandler;
+
+use crate::handlers::HandshakeRequestMessageHandler;
 
 type MessageType = Message;
 
@@ -44,15 +48,20 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
 
         match messages.next().await {
             Some(Ok(message)) => match message {
-                Message::HandshakeRequest { steam_id } => {
-                    let client = Client::new(tx, steam_id, String::default());
-
-                    println!("{} connected with steam_id {}", address, steam_id);
-
-                    state.lock().await.add_client(&address, client);
+                Message::HandshakeRequest(request) => {
+                    if let Err(error) = request
+                        .handle_message(tx, &mut messages, &address, &state)
+                        .await
+                    {
+                        println!(
+                            "An error occurred while handling handshake from {}: {:?}",
+                            address, error
+                        );
+                        return;
+                    }
                 }
                 _ => {
-                    println!("Invalid handshake received from {}", address);
+                    println!("Did not receive a valid handshake");
                     return;
                 }
             },
@@ -78,7 +87,7 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
                 },
                 result = messages.next() => match result {
                     Some(Ok(message)) => {
-                        if let Err(error) = handle_message(&mut messages, message, &address, &state).await {
+                        if let Err(error) = message.handle_message(&mut messages, &address, &state).await {
                             println!("An error occured when handling message from {}: {:?}", address, error);
                             break;
                         }
@@ -96,14 +105,4 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
         state.lock().await.remove_client(&address);
         println!("{} disconnected", address);
     });
-}
-
-async fn handle_message(
-    messages: &mut Framed<TcpStream, MessagesCodec>,
-    message: Message,
-    address: &SocketAddr,
-    state: &Arc<Mutex<State>>,
-) -> Result<(), anyhow::Error> {
-    println!("handling message: {:?}", message);
-    Ok(())
 }
