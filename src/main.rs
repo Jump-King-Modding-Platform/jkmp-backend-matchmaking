@@ -45,8 +45,11 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
         match messages.next().await {
             Some(Ok(message)) => match message {
                 Message::HandshakeRequest { steam_id } => {
-                    let client = Client::new(tx);
-                    state.lock().await.clients.insert(address, client);
+                    let client = Client::new(tx, steam_id, String::default());
+
+                    println!("{} connected with steam_id {}", address, steam_id);
+
+                    state.lock().await.add_client(&address, client);
                 }
                 _ => {
                     println!("Invalid handshake received from {}", address);
@@ -89,7 +92,8 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
             }
         }
 
-        state.lock().await.clients.remove(&address);
+        state.lock().await.remove_client(&address);
+        println!("{} disconnected", address);
     });
 }
 
