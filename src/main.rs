@@ -1,5 +1,5 @@
 use futures::{SinkExt, StreamExt};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{mpsc, Mutex},
@@ -12,35 +12,13 @@ use codec::MessagesCodec;
 mod messages;
 use messages::Message;
 
+mod state;
+use state::State;
+
+mod client;
+use client::Client;
+
 type MessageType = Message;
-
-struct Client {
-    tx: mpsc::UnboundedSender<MessageType>,
-    steam_id: u64,
-    name: String,
-}
-
-impl Client {
-    fn new(tx: mpsc::UnboundedSender<MessageType>) -> Self {
-        Self {
-            tx,
-            steam_id: 0,
-            name: String::default(),
-        }
-    }
-}
-
-struct State {
-    clients: HashMap<SocketAddr, Client>,
-}
-
-impl State {
-    fn new() -> Self {
-        Self {
-            clients: HashMap::new(),
-        }
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
