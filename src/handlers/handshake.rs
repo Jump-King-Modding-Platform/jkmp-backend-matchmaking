@@ -8,8 +8,6 @@ use crate::{
     messages::{HandshakeRequest, Message},
 };
 
-pub struct HandshakeRequestHandler {}
-
 #[async_trait::async_trait]
 impl HandshakeRequestMessageHandler for HandshakeRequest {
     async fn handle_message(

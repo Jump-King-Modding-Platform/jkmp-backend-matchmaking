@@ -1,11 +1,11 @@
 use futures::{SinkExt, StreamExt};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{
     net::{TcpListener, TcpStream},
     signal,
     sync::{mpsc, Mutex},
 };
-use tokio_util::codec::{Decoder, Framed};
+use tokio_util::codec::Decoder;
 
 mod codec;
 use codec::MessagesCodec;
