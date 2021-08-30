@@ -55,7 +55,7 @@ impl Decoder for MessagesCodec {
             anyhow::bail!("Message is too small (<4 bytes)");
         }
 
-        let length = src.get_u32_le();
+        let length = src.get_u32_le() as usize;
         let remaining = src.remaining();
 
         if length as usize > remaining {
@@ -66,8 +66,12 @@ impl Decoder for MessagesCodec {
             );
         }
 
-        let message: Self::Item = get_options().deserialize(&src)?;
-        src.advance(length as usize);
+        if length == 0 {
+            anyhow::bail!("Message length is zero");
+        }
+
+        let message: Self::Item = get_options().deserialize(&src[..length])?;
+        src.advance(length);
 
         Ok(Some(message))
     }
