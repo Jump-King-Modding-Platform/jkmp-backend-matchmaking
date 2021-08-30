@@ -51,9 +51,14 @@ impl Decoder for MessagesCodec {
         }
 
         let length = src.get_u32_le();
+        let remaining = src.remaining();
 
-        if length as usize > src.remaining() {
-            return Err(anyhow::format_err!("Message length > Remaining"));
+        if length as usize > remaining {
+            anyhow::bail!(
+                "Message length ({}) > Remaining ({})",
+                length,
+                src.remaining()
+            );
         }
 
         let message: Self::Item = get_options().deserialize(&src)?;
