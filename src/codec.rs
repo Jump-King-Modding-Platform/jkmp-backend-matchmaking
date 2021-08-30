@@ -50,6 +50,11 @@ impl Decoder for MessagesCodec {
             return Ok(None);
         }
 
+        if src.remaining() < 4 {
+            src.advance(src.remaining());
+            anyhow::bail!("Message is too small (<4 bytes)");
+        }
+
         let length = src.get_u32_le();
         let remaining = src.remaining();
 
