@@ -60,34 +60,33 @@ async fn main() -> Result<(), anyhow::Error> {
 }
 
 async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex<State>>) {
-    let (tx, mut rx) = mpsc::unbounded_channel::<MessageType>();
+    tokio::spawn(async move {
+        let (tx, mut rx) = mpsc::unbounded_channel::<MessageType>();
+        let mut messages = MessagesCodec::new().framed(socket);
 
-    let mut messages = MessagesCodec::new().framed(socket);
-
-    match messages.next().await {
-        Some(Ok(message)) => match message {
-            Message::HandshakeRequest { steam_id } => {
-                let client = Client::new(tx);
-                state.lock().await.clients.insert(address, client);
-            }
-            _ => {
-                println!("Invalid handshake received from {}", address);
+        match messages.next().await {
+            Some(Ok(message)) => match message {
+                Message::HandshakeRequest { steam_id } => {
+                    let client = Client::new(tx);
+                    state.lock().await.clients.insert(address, client);
+                }
+                _ => {
+                    println!("Invalid handshake received from {}", address);
+                    return;
+                }
+            },
+            Some(Err(error)) => {
+                println!(
+                    "Error occurred while reading handshake from {}: {:?}",
+                    address, error
+                );
                 return;
             }
-        },
-        Some(Err(error)) => {
-            println!(
-                "Error occurred while reading handshake from {}: {:?}",
-                address, error
-            );
-            return;
+            _ => {
+                return;
+            }
         }
-        _ => {
-            return;
-        }
-    }
 
-    tokio::spawn(async move {
         loop {
             tokio::select! {
                 Some(outbound_message) = rx.recv() => {
