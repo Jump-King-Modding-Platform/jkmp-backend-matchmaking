@@ -2,6 +2,7 @@ use futures::{SinkExt, StreamExt};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{
     net::{TcpListener, TcpStream},
+    signal,
     sync::{mpsc, Mutex},
 };
 use tokio_util::codec::{Decoder, Framed};
@@ -30,15 +31,24 @@ async fn main() -> Result<(), anyhow::Error> {
     let state = Arc::new(Mutex::new(State::new()));
 
     loop {
-        let result = listener.accept().await;
-
-        match result {
-            Err(error) => println!("An error occurred when accepting socket: {}", error),
-            Ok((socket, address)) => {
-                process_client(socket, address, state.clone()).await;
+        tokio::select! {
+            result = listener.accept() => match result {
+                Err(error) => println!("An error occurred when accepting socket: {}", error),
+                Ok((socket, address)) => {
+                    process_client(socket, address, state.clone()).await;
+                }
+            },
+            _ = signal::ctrl_c() => {
+                break;
             }
         }
     }
+
+    println!("Server shutting down...");
+
+    // todo: send message about shutdown to clients?
+
+    Ok(())
 }
 
 async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex<State>>) {
