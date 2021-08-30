@@ -85,6 +85,7 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
                     },
                     Some(Err(error)) => {
                         println!("An error occured when reading message from {}: {:?}", address, error);
+                        break;
                     },
                     None => break // Client disconnected
                 },
