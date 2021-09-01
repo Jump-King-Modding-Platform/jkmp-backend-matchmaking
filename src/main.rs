@@ -21,6 +21,8 @@ mod client;
 mod handlers;
 use handlers::MessageHandler;
 
+mod steam;
+
 use crate::handlers::HandshakeRequestMessageHandler;
 
 type MessageType = Message;

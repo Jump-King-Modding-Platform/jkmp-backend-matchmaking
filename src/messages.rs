@@ -8,7 +8,7 @@ pub enum Message {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HandshakeRequest {
-    pub steam_id: u64,
+    pub auth_session_ticket: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
