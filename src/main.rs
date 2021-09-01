@@ -44,6 +44,11 @@ struct LaunchOptions {
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     let options = LaunchOptions::from_args();
+
+    if std::env::var("STEAM_API_KEY").is_err() {
+        anyhow::bail!("Environment variable STEAM_API_KEY is missing");
+    }
+
     let listener = TcpListener::bind(format!("{}:{}", options.host, options.port)).await?;
     let state = Arc::new(Mutex::new(State::new()));
 
