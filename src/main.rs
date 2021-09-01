@@ -1,5 +1,6 @@
 use futures::{SinkExt, StreamExt};
 use std::{net::SocketAddr, sync::Arc};
+use structopt::StructOpt;
 use tokio::{
     net::{TcpListener, TcpStream},
     signal,
@@ -27,10 +28,29 @@ use crate::handlers::HandshakeRequestMessageHandler;
 
 type MessageType = Message;
 
+#[derive(StructOpt)]
+#[structopt(
+    name = "JKMP Matchmaking Server",
+    about = "Handles matchmaking between players"
+)]
+struct LaunchOptions {
+    #[structopt(short, long, default_value = "0.0.0.0")]
+    host: String,
+
+    #[structopt(short, long)]
+    port: u16,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let listener = TcpListener::bind("127.0.0.1:16000").await?;
+    let options = LaunchOptions::from_args();
+    let listener = TcpListener::bind(format!("{}:{}", options.host, options.port)).await?;
     let state = Arc::new(Mutex::new(State::new()));
+
+    println!(
+        "Server started, listening for clients on {}:{}",
+        options.host, options.port
+    );
 
     loop {
         tokio::select! {
