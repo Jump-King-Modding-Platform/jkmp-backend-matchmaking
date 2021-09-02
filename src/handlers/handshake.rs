@@ -32,6 +32,8 @@ impl HandshakeRequestMessageHandler for HandshakeRequest {
                     .await?;
             }
             Err(error) => {
+                println!("{} failed to auth: {}", source, error);
+
                 messages
                     .send(Message::HandshakeResponse(HandshakeResponse {
                         success: false,
