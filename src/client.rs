@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use tokio::sync::mpsc::{self, error::SendError};
 
 use crate::{messages::Message, MessageType};
@@ -14,5 +16,11 @@ impl Client {
 
     pub fn send(&self, message: Message) -> Result<(), SendError<Message>> {
         self.tx.send(message)
+    }
+}
+
+impl Display for Client {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", &self.name, &self.steam_id)
     }
 }

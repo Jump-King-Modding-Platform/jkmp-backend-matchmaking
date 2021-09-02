@@ -140,7 +140,9 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
             }
         }
 
-        state.lock().await.remove_client(&address);
-        println!("{} disconnected", address);
+        let mut state = state.lock().await;
+        if let Some(client) = state.remove_client(&address) {
+            println!("{} disconnected", client);
+        }
     });
 }

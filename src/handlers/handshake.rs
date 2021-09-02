@@ -35,8 +35,8 @@ impl HandshakeRequestMessageHandler for HandshakeRequest {
                 }
 
                 let client = Client::new(tx, ids.steam_id, name.into());
+                println!("{} connected", client);
                 state.lock().await.add_client(source, client);
-                println!("{} connected with steam_id {}", name, ids);
 
                 send_response(
                     messages,
