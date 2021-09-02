@@ -1,6 +1,6 @@
 use bincode::{
     config::{
-        Bounded, FixintEncoding, LittleEndian, WithOtherEndian, WithOtherIntEncoding,
+        Bounded, LittleEndian, VarintEncoding, WithOtherEndian, WithOtherIntEncoding,
         WithOtherLimit,
     },
     DefaultOptions, Options,
@@ -20,12 +20,12 @@ impl MessagesCodec {
 
 fn get_options() -> WithOtherIntEncoding<
     WithOtherLimit<WithOtherEndian<DefaultOptions, LittleEndian>, Bounded>,
-    FixintEncoding,
+    VarintEncoding,
 > {
     DefaultOptions::new()
         .with_little_endian()
         .with_limit(4096)
-        .with_fixint_encoding()
+        .with_varint_encoding()
 }
 
 impl Encoder<Message> for MessagesCodec {
@@ -34,7 +34,7 @@ impl Encoder<Message> for MessagesCodec {
     fn encode(&mut self, item: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let payload = get_options().serialize(&item)?;
 
-        dst.put_u32_le(payload.len() as u32);
+        crate::encoding::put_varint_le(dst, payload.len() as u64);
         dst.put_slice(&payload);
 
         Ok(())
@@ -50,12 +50,7 @@ impl Decoder for MessagesCodec {
             return Ok(None);
         }
 
-        if src.remaining() < 4 {
-            src.advance(src.remaining());
-            anyhow::bail!("Message is too small (<4 bytes)");
-        }
-
-        let length = src.get_u32_le() as usize;
+        let length = crate::encoding::get_varint_le(src)? as usize;
         let remaining = src.remaining();
 
         if length as usize > remaining {

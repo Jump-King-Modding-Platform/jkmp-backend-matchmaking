@@ -22,6 +22,7 @@ mod client;
 mod handlers;
 use handlers::MessageHandler;
 
+mod encoding;
 mod steam;
 
 use crate::handlers::HandshakeRequestMessageHandler;
