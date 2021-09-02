@@ -21,27 +21,55 @@ impl HandshakeRequestMessageHandler for HandshakeRequest {
     ) -> Result<(), anyhow::Error> {
         match steam::verify_user_auth_ticket(&self.auth_session_ticket).await {
             Ok(ids) => {
-                let client = Client::new(tx, ids.steam_id, String::default());
-                state.lock().await.add_client(source, client);
-                println!("{} connected with steam_id {}", source, ids);
+                let name = self.name.trim();
 
-                messages
-                    .send(Message::HandshakeResponse(HandshakeResponse {
+                if name.is_empty() {
+                    return send_response(
+                        messages,
+                        HandshakeResponse {
+                            success: false,
+                            error_message: Some("Player name is empty".to_string()),
+                        },
+                    )
+                    .await;
+                }
+
+                let client = Client::new(tx, ids.steam_id, name.into());
+                state.lock().await.add_client(source, client);
+                println!("{} connected with steam_id {}", name, ids);
+
+                send_response(
+                    messages,
+                    HandshakeResponse {
                         success: true,
-                    }))
-                    .await?;
+                        error_message: None,
+                    },
+                )
+                .await?;
             }
             Err(error) => {
                 println!("{} failed to auth: {}", source, error);
 
-                messages
-                    .send(Message::HandshakeResponse(HandshakeResponse {
+                send_response(
+                    messages,
+                    HandshakeResponse {
                         success: false,
-                    }))
-                    .await?;
+                        error_message: Some(error.to_string()),
+                    },
+                )
+                .await?;
             }
         }
 
         Ok(())
     }
+}
+
+#[inline]
+async fn send_response(
+    messages: &mut Framed<TcpStream, MessagesCodec>,
+    response: HandshakeResponse,
+) -> Result<(), anyhow::Error> {
+    messages.send(Message::HandshakeResponse(response)).await?;
+    Ok(())
 }
