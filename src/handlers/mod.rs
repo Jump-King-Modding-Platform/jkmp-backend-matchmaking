@@ -9,6 +9,8 @@ use tokio_util::codec::Framed;
 use crate::{codec::MessagesCodec, messages::Message, state::State};
 
 pub mod handshake;
+pub mod position_update;
+pub mod set_matchmaking_password;
 
 #[async_trait::async_trait]
 pub trait MessageHandler {
@@ -41,6 +43,10 @@ impl MessageHandler for Message {
     ) -> Result<(), anyhow::Error> {
         println!("handling message: {:?}", self);
         match self {
+            Message::PositionUpdate(val) => val.handle_message(messages, source, state).await,
+            Message::SetMatchmakingPassword(val) => {
+                val.handle_message(messages, source, state).await
+            }
             _ => anyhow::bail!("Unexpected message"),
         }
     }
