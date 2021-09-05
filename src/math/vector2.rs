@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Debug, Serialize, Deserialize, Copy)]
+#[derive(Debug, Serialize, Deserialize, Copy, PartialEq)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,

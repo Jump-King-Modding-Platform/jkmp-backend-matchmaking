@@ -8,6 +8,7 @@ pub enum Message {
     HandshakeResponse(HandshakeResponse),
     PositionUpdate(PositionUpdate),
     SetMatchmakingPassword(SetMatchmakingPassword),
+    InformNearbyClients(InformNearbyClients),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -32,4 +33,9 @@ pub struct PositionUpdate {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SetMatchmakingPassword {
     pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InformNearbyClients {
+    pub client_ids: Vec<u64>,
 }
