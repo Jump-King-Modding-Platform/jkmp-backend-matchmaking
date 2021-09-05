@@ -30,11 +30,14 @@ impl MessageHandler for PositionUpdate {
                 .map(|&c| c.steam_id)
                 .collect();
 
-            messages
-                .send(Message::InformNearbyClients(InformNearbyClients {
-                    client_ids: nearby_client_ids,
-                }))
-                .await?;
+            // Split up message into multiple messages if there's more than 50 clients to send
+            for chunk in nearby_client_ids.chunks(50) {
+                messages
+                    .send(Message::InformNearbyClients(InformNearbyClients {
+                        client_ids: chunk.into(),
+                    }))
+                    .await?;
+            }
         }
 
         Ok(())
