@@ -10,29 +10,29 @@ use tokio_util::codec::{Decoder, Encoder};
 
 use crate::messages::Message;
 
-pub struct MessagesCodec {}
+pub struct MessagesCodec {
+    options: WithOtherIntEncoding<
+        WithOtherLimit<WithOtherEndian<DefaultOptions, LittleEndian>, Bounded>,
+        VarintEncoding,
+    >,
+}
 
 impl MessagesCodec {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            options: DefaultOptions::new()
+                .with_little_endian()
+                .with_limit(4096)
+                .with_varint_encoding(),
+        }
     }
-}
-
-fn get_options() -> WithOtherIntEncoding<
-    WithOtherLimit<WithOtherEndian<DefaultOptions, LittleEndian>, Bounded>,
-    VarintEncoding,
-> {
-    DefaultOptions::new()
-        .with_little_endian()
-        .with_limit(4096)
-        .with_varint_encoding()
 }
 
 impl Encoder<Message> for MessagesCodec {
     type Error = anyhow::Error;
 
     fn encode(&mut self, item: Message, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        let payload = get_options().serialize(&item)?;
+        let payload = self.options.serialize(&item)?;
 
         crate::encoding::put_varint_le(dst, payload.len() as u64);
         dst.put_slice(&payload);
@@ -65,7 +65,7 @@ impl Decoder for MessagesCodec {
             anyhow::bail!("Message length is zero");
         }
 
-        let message: Self::Item = get_options().deserialize(&src[..length])?;
+        let message: Self::Item = self.options.deserialize(&src[..length])?;
         src.advance(length);
 
         Ok(Some(message))
