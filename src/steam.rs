@@ -65,7 +65,7 @@ impl UserSteamId {
     }
 }
 
-/// Verifies the user auth ticket and if successful return the user steam id
+/// Verifies the user auth ticket and if successful returns the user steam id and owner id (owner id is different if the game is family shared)
 pub async fn verify_user_auth_ticket(ticket: &[u8]) -> Result<UserSteamId, anyhow::Error> {
     let steam_api_key = std::env::var("STEAM_API_KEY")
         .context("Could not find STEAM_API_KEY environment variable")?;
@@ -97,7 +97,7 @@ pub async fn verify_user_auth_ticket(ticket: &[u8]) -> Result<UserSteamId, anyho
 
             if let Some(error) = response.response.error {
                 anyhow::bail!(
-                    "Response was not successful: {} (error code {})",
+                    "Steam response was not successful: {} (error code {})",
                     error.error_desc,
                     error.error_code
                 );
