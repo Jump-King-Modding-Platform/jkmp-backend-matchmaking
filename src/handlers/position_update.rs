@@ -1,15 +1,10 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Context;
-use futures::SinkExt;
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_util::codec::Framed;
 
-use crate::{
-    codec::MessagesCodec,
-    messages::{InformNearbyClients, Message, PositionUpdate},
-    state::State,
-};
+use crate::{codec::MessagesCodec, messages::PositionUpdate, state::State};
 
 use super::MessageHandler;
 
@@ -33,20 +28,8 @@ impl MessageHandler for PositionUpdate {
         let nearby_clients = state.get_nearby_clients(&self.position, matchmaking_options);
 
         if nearby_clients.len() > 1 {
-            let nearby_client_ids: Vec<u64> = nearby_clients
-                .iter()
-                .filter(|&&c| c.steam_id != steam_id)
-                .map(|&c| c.steam_id)
-                .collect();
-
-            // Split up message into multiple messages if there's more than 50 clients to send
-            for chunk in nearby_client_ids.chunks(50) {
-                messages
-                    .send(Message::InformNearbyClients(InformNearbyClients {
-                        client_ids: chunk.into(),
-                    }))
-                    .await?;
-            }
+            crate::util::networking::send_nearby_clients(&steam_id, messages, &nearby_clients)
+                .await?;
         }
 
         Ok(())

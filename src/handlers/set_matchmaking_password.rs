@@ -21,10 +21,21 @@ impl MessageHandler for SetMatchmakingPassword {
     ) -> Result<(), anyhow::Error> {
         let mut state = state.lock().await;
         let level_name = state.get_matchmaking_options(source).level_name.clone();
-        state.set_matchmaking_options(
-            source,
-            Some(MatchmakingOptions::new(self.password.clone(), level_name)),
-        );
+        let matchmaking_options = MatchmakingOptions::new(self.password.clone(), level_name);
+        state.set_matchmaking_options(source, Some(matchmaking_options.clone()));
+
+        let client = state.get_client(source).unwrap();
+        let nearby_clients = state.get_nearby_clients(&client.position, &matchmaking_options);
+
+        if nearby_clients.len() > 1 {
+            crate::util::networking::send_nearby_clients(
+                &client.steam_id,
+                messages,
+                &nearby_clients,
+            )
+            .await?;
+        }
+
         Ok(())
     }
 }

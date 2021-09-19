@@ -25,6 +25,7 @@ use handlers::MessageHandler;
 mod encoding;
 mod math;
 mod steam;
+mod util;
 
 use crate::handlers::HandshakeRequestMessageHandler;
 

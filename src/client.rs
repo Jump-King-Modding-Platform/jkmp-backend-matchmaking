@@ -1,4 +1,4 @@
-use std::{fmt::Display, net::SocketAddr};
+use std::fmt::Display;
 
 use tokio::sync::mpsc::{self, error::SendError};
 
