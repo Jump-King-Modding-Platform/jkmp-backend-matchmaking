@@ -15,7 +15,8 @@ pub enum Message {
 pub struct HandshakeRequest {
     pub auth_session_ticket: Vec<u8>,
     pub name: String,
-    pub matchmaking_password: String,
+    pub matchmaking_password: Option<String>,
+    pub level_name: String,
     pub position: Vector2,
 }
 
@@ -32,7 +33,7 @@ pub struct PositionUpdate {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SetMatchmakingPassword {
-    pub password: String,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
