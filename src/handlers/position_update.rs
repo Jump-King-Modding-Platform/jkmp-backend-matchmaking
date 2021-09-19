@@ -1,7 +1,10 @@
-use anyhow::Context;
-use futures::SinkExt;
+use std::{net::SocketAddr, sync::Arc};
 
-use crate::messages::{InformNearbyClients, Message, PositionUpdate};
+use anyhow::Context;
+use tokio::{net::TcpStream, sync::Mutex};
+use tokio_util::codec::Framed;
+
+use crate::{codec::MessagesCodec, messages::PositionUpdate, state::State};
 
 use super::MessageHandler;
 
@@ -9,35 +12,24 @@ use super::MessageHandler;
 impl MessageHandler for PositionUpdate {
     async fn handle_message(
         &self,
-        messages: &mut tokio_util::codec::Framed<
-            tokio::net::TcpStream,
-            crate::codec::MessagesCodec,
-        >,
-        source: &std::net::SocketAddr,
-        state: &std::sync::Arc<tokio::sync::Mutex<crate::state::State>>,
+        messages: &mut Framed<TcpStream, MessagesCodec>,
+        source: &SocketAddr,
+        state: &Arc<Mutex<State>>,
     ) -> Result<(), anyhow::Error> {
+        let steam_id: u64;
         let mut state = state.lock().await;
-        let mut client = state.get_client_mut(source).context("Client not found")?;
-        client.position = self.position;
-        let steam_id = client.steam_id;
+        {
+            let mut client = state.get_client_mut(source).context("Client not found")?;
+            client.position = self.position;
+            steam_id = client.steam_id;
+        }
 
-        let nearby_clients = state.get_nearby_clients(&self.position);
+        let matchmaking_options = state.get_matchmaking_options(source);
+        let nearby_clients = state.get_nearby_clients(&self.position, matchmaking_options);
 
         if nearby_clients.len() > 1 {
-            let nearby_client_ids: Vec<u64> = nearby_clients
-                .iter()
-                .filter(|&&c| c.steam_id != steam_id)
-                .map(|&c| c.steam_id)
-                .collect();
-
-            // Split up message into multiple messages if there's more than 50 clients to send
-            for chunk in nearby_client_ids.chunks(50) {
-                messages
-                    .send(Message::InformNearbyClients(InformNearbyClients {
-                        client_ids: chunk.into(),
-                    }))
-                    .await?;
-            }
+            crate::util::networking::send_nearby_clients(&steam_id, messages, &nearby_clients)
+                .await?;
         }
 
         Ok(())
