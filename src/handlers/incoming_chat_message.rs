@@ -6,19 +6,18 @@ use tokio_util::codec::Framed;
 
 use crate::{codec::MessagesCodec, messages::IncomingChatMessage, state::State};
 
-use super::MessageHandler;
+pub async fn handle_message(
+    message: &IncomingChatMessage,
+    messages: &mut Framed<TcpStream, MessagesCodec>,
+    source: &SocketAddr,
+    state: &Arc<Mutex<State>>,
+) -> Result<(), anyhow::Error> {
+    let state = state.lock().await;
+    let client = state.get_client(source).context("Client not found")?;
 
-#[async_trait::async_trait]
-impl MessageHandler for IncomingChatMessage {
-    async fn handle_message(
-        &self,
-        messages: &mut Framed<TcpStream, MessagesCodec>,
-        source: &SocketAddr,
-        state: &Arc<Mutex<State>>,
-    ) -> Result<(), anyhow::Error> {
-        let state = state.lock().await;
-        let client = state.get_client(source).context("Client not found")?;
-
-        todo!()
+    match message.channel {
+        crate::chat::ChatChannel::Global => todo!(),
+        crate::chat::ChatChannel::Group => todo!(),
+        _ => anyhow::bail!("Unexpected channel"),
     }
 }

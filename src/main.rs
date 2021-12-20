@@ -1,4 +1,5 @@
 use futures::{SinkExt, StreamExt};
+use handlers::handshake;
 use std::{net::SocketAddr, sync::Arc};
 use structopt::StructOpt;
 use tokio::{
@@ -20,15 +21,12 @@ use state::State;
 mod client;
 
 mod handlers;
-use handlers::MessageHandler;
 
 mod chat;
 mod encoding;
 mod math;
 mod steam;
 mod util;
-
-use crate::handlers::HandshakeRequestMessageHandler;
 
 type MessageType = Message;
 
@@ -90,9 +88,9 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
         match messages.next().await {
             Some(Ok(message)) => match message {
                 Message::HandshakeRequest(request) => {
-                    if let Err(error) = request
-                        .handle_message(tx, &mut messages, &address, &state)
-                        .await
+                    if let Err(error) =
+                        handshake::handle_message(&request, tx, &mut messages, &address, &state)
+                            .await
                     {
                         println!(
                             "An error occurred while handling handshake from {}: {:?}",
@@ -128,7 +126,7 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
                 },
                 result = messages.next() => match result {
                     Some(Ok(message)) => {
-                        if let Err(error) = message.handle_message(&mut messages, &address, &state).await {
+                        if let Err(error) = handlers::handle_message(&message, &mut messages, &address, &state).await {
                             println!("An error occured when handling message from {}: {:?}", address, error);
                             break;
                         }
