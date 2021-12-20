@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::math::Vector2;
+use crate::{chat::ChatChannel, math::Vector2};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
@@ -9,6 +9,8 @@ pub enum Message {
     PositionUpdate(PositionUpdate),
     SetMatchmakingPassword(SetMatchmakingPassword),
     InformNearbyClients(InformNearbyClients),
+    IncomingChatMessage(IncomingChatMessage),
+    OutgoingChatMessage(OutgoingChatMessage),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,4 +41,18 @@ pub struct SetMatchmakingPassword {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InformNearbyClients {
     pub client_ids: Vec<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IncomingChatMessage {
+    pub message: String,
+    pub channel: ChatChannel,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OutgoingChatMessage {
+    pub message: String,
+    pub channel: ChatChannel,
+    pub sender_name: Option<String>,
+    pub sender_id: Option<u64>,
 }

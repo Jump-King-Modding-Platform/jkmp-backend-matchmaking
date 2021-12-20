@@ -22,6 +22,7 @@ mod client;
 mod handlers;
 use handlers::MessageHandler;
 
+mod chat;
 mod encoding;
 mod math;
 mod steam;

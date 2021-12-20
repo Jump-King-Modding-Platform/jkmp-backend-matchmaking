@@ -9,6 +9,7 @@ use tokio_util::codec::Framed;
 use crate::{codec::MessagesCodec, messages::Message, state::State};
 
 pub mod handshake;
+pub mod incoming_chat_message;
 pub mod position_update;
 pub mod set_matchmaking_password;
 
@@ -47,6 +48,7 @@ impl MessageHandler for Message {
             Message::SetMatchmakingPassword(val) => {
                 val.handle_message(messages, source, state).await
             }
+            Message::IncomingChatMessage(val) => val.handle_message(messages, source, state).await,
             _ => anyhow::bail!("Unexpected message"),
         }
     }
