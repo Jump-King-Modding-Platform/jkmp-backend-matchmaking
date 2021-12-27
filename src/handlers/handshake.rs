@@ -1,5 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
+use anyhow::Context;
 use futures::SinkExt;
 use tokio::{
     net::TcpStream,
@@ -22,23 +23,17 @@ pub async fn handle_message(
     source: &SocketAddr,
     state: &Arc<Mutex<State>>,
 ) -> Result<(), anyhow::Error> {
-    let name = message.name.trim();
-
-    if name.is_empty() || name.len() < 2 || name.len() > 32 {
-        return send_response(
-            messages,
-            HandshakeResponse {
-                success: false,
-                error_message: Some("Player name is invalid".to_string()),
-            },
-        )
-        .await;
-    }
-
     match steam::verify_user_auth_ticket(&message.auth_session_ticket).await {
         Ok(ids) => {
+            let user_infos = steam::get_player_summaries(vec![ids.steam_id]).await?;
+            let user_info = user_infos
+                .get(&ids.steam_id)
+                .context("Could not get user info from steam")?;
+
+            let name = &user_info.name;
+
             let mut state = state.lock().await;
-            let client = Client::new(tx, ids.steam_id, name.into(), message.position);
+            let client = Client::new(tx, ids.steam_id, name.clone(), message.position);
             println!("{} connected", client);
 
             let matchmaking_options = MatchmakingOptions::new(

@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{chat::ChatChannel, math::Vector2};
 
+// Allows incoming and outgoing chat message variants to end in "Message"
+// without warning us about enum variants being suffixed by the same name as the enum
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     HandshakeRequest(HandshakeRequest),
@@ -16,7 +19,6 @@ pub enum Message {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HandshakeRequest {
     pub auth_session_ticket: Vec<u8>,
-    pub name: String,
     pub matchmaking_password: Option<String>,
     pub level_name: String,
     pub position: Vector2,
@@ -45,14 +47,14 @@ pub struct InformNearbyClients {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IncomingChatMessage {
-    pub message: String,
     pub channel: ChatChannel,
+    pub message: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OutgoingChatMessage {
-    pub message: String,
     pub channel: ChatChannel,
-    pub sender_name: Option<String>,
     pub sender_id: Option<u64>,
+    pub sender_name: Option<String>,
+    pub message: String,
 }

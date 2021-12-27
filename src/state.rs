@@ -65,16 +65,16 @@ impl State {
         self.clients.iter_mut()
     }
 
-    fn get_clients_in_group(
+    pub fn get_clients_in_group(
         &self,
         matchmaking_options: &MatchmakingOptions,
-    ) -> Option<impl Iterator<Item = &Client>> {
-        let group = self.matchmaking_map.get(matchmaking_options)?;
+    ) -> impl Iterator<Item = &Client> {
+        let group = self.matchmaking_map.get(matchmaking_options).unwrap(); // The client is always guaranteed to be in a group
         let iter = group
             .iter()
             .map(move |addr| self.clients.get(addr).unwrap());
 
-        Some(iter)
+        iter
     }
 
     pub fn get_nearby_clients(
@@ -86,11 +86,7 @@ impl State {
         let level = get_y_level(position.y);
         let clients = self.get_clients_in_group(matchmaking_options);
 
-        if clients.is_none() {
-            return vec![];
-        }
-
-        for other in clients.unwrap() {
+        for other in clients {
             let other_level = get_y_level(other.position.y);
 
             // If the players are within 3 screens from eachother, they are close enough to matchmake

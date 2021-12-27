@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum ChatChannel {
-    Global = 1 << 0,
-    Local = 1 << 1,
-    Friends = 1 << 2,
-    Group = 1 << 3,
+    Global,
+    Local,
+    Friends,
+    Group,
 }
