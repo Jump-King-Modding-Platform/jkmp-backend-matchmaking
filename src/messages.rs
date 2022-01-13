@@ -22,6 +22,7 @@ pub struct HandshakeRequest {
     pub matchmaking_password: Option<String>,
     pub level_name: String,
     pub position: Vector2,
+    pub version: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

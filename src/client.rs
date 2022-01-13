@@ -4,6 +4,8 @@ use tokio::sync::mpsc::{self, error::SendError};
 
 use crate::{math::Vector2, messages::Message, MessageType};
 
+pub const VERSION: u32 = 1;
+
 pub struct Client {
     tx: mpsc::UnboundedSender<MessageType>,
     pub steam_id: u64,

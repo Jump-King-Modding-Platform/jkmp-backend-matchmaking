@@ -9,7 +9,7 @@ use tokio::{
 use tokio_util::codec::Framed;
 
 use crate::{
-    client::Client,
+    client::{self, Client},
     codec::MessagesCodec,
     messages::{HandshakeRequest, HandshakeResponse, Message},
     state::{MatchmakingOptions, State},
@@ -23,6 +23,18 @@ pub async fn handle_message(
     source: &SocketAddr,
     state: &Arc<Mutex<State>>,
 ) -> Result<(), anyhow::Error> {
+    if message.version != client::VERSION {
+        send_response(
+            messages,
+            HandshakeResponse {
+                success: false,
+                error_message: Some("Your version is outdated".to_string()),
+            },
+        )
+        .await?;
+        anyhow::bail!("Client version {} mismatch", message.version);
+    }
+
     match steam::verify_user_auth_ticket(&message.auth_session_ticket).await {
         Ok(ids) => {
             let user_infos = steam::get_player_summaries(vec![ids.steam_id]).await?;
