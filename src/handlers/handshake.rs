@@ -70,7 +70,9 @@ pub async fn handle_message(
                 messages,
                 HandshakeResponse {
                     success: false,
-                    error_message: Some(error.to_string()),
+                    error_message: Some(
+                        "An unexpected error occured when handling handshake request".to_string(),
+                    ),
                 },
             )
             .await?;
