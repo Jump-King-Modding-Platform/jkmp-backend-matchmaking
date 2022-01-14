@@ -12,6 +12,8 @@ pub async fn handle_message(
     source: &SocketAddr,
     state: &Arc<Mutex<State>>,
 ) -> Result<(), anyhow::Error> {
+    tracing::info!("{:?}", message);
+
     let steam_id: u64;
     let mut state = state.lock().await;
     {

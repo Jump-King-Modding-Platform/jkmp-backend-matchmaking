@@ -16,7 +16,7 @@ pub async fn handle_message(
     source: &SocketAddr,
     state: &Arc<Mutex<State>>,
 ) -> Result<(), anyhow::Error> {
-    println!("handling message: {:?}", message);
+    tracing::trace!("handling message: {:?}", message);
     match message {
         Message::PositionUpdate(val) => {
             position_update::handle_message(val, messages, source, state).await

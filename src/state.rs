@@ -128,9 +128,10 @@ impl State {
                 self.matchmaking_map.remove(previous_options);
             }
 
-            println!(
+            tracing::info!(
                 "Removed {} from group. Members in group is now {}",
-                address, new_group_len
+                address,
+                new_group_len
             );
         }
 
@@ -144,7 +145,7 @@ impl State {
 
                 group.push(*address);
 
-                println!(
+                tracing::info!(
                     "Added {} to group. Members in group is now {}",
                     address,
                     group.len()

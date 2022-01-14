@@ -30,6 +30,13 @@ pub async fn handle_message(
     let state = state.lock().await;
     let client = state.get_client(source).context("Client not found")?;
 
+    tracing::info!(
+        "[{:?}] <{}> {}",
+        message.channel,
+        client.name,
+        message.message
+    );
+
     // List of clients to send the message to
     let mut target_clients = Vec::<&Client>::new();
 

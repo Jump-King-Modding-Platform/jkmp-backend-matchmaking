@@ -46,7 +46,7 @@ pub async fn handle_message(
 
             let mut state = state.lock().await;
             let client = Client::new(tx, ids.steam_id, name.clone(), message.position);
-            println!("{} connected", client);
+            tracing::info!("{} connected", client);
 
             let matchmaking_options = MatchmakingOptions::new(
                 message.matchmaking_password.clone(),
@@ -64,7 +64,7 @@ pub async fn handle_message(
             .await?;
         }
         Err(error) => {
-            println!("{} failed to auth: {}", source, error);
+            tracing::info!("{} failed to auth: {}", source, error);
 
             send_response(
                 messages,
