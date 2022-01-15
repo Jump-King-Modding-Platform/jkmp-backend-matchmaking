@@ -69,12 +69,10 @@ impl State {
         &self,
         matchmaking_options: &MatchmakingOptions,
     ) -> impl Iterator<Item = &Client> {
-        let group = self.matchmaking_map.get(matchmaking_options).unwrap(); // The client is always guaranteed to be in a group
-        let iter = group
-            .iter()
-            .map(move |addr| self.clients.get(addr).unwrap());
-
-        iter
+        self.matchmaking_map
+            .get(matchmaking_options)
+            .into_iter()
+            .flat_map(move |group| group.iter().filter_map(move |addr| self.clients.get(addr)))
     }
 
     pub fn get_nearby_clients(

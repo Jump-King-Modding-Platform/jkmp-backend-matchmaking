@@ -9,9 +9,10 @@ use tokio::{
 use tokio_util::codec::Framed;
 
 use crate::{
+    chat::ChatChannel,
     client::{self, Client},
     codec::MessagesCodec,
-    messages::{HandshakeRequest, HandshakeResponse, Message},
+    messages::{HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage},
     state::{MatchmakingOptions, State},
     steam,
 };
@@ -52,6 +53,22 @@ pub async fn handle_message(
                 message.matchmaking_password.clone(),
                 message.level_name.clone(),
             );
+
+            let clients_total = state.get_clients_iter().len();
+            let clients_in_group = state.get_clients_in_group(&matchmaking_options).count();
+
+            let welcome_message = match (clients_total, clients_in_group) {
+                (0, 0) => "Welcome! There are currently no other players online.".into(),
+                (total, 0) => format!(
+                    "Welcome! There are {} other players online, but none of them in your group.",
+                    total
+                ),
+                (total, group) => format!(
+                    "Welcome! There are {} other players online. {} of them are in your group.",
+                    total, group
+                ),
+            };
+
             state.add_client(source, client, matchmaking_options);
 
             send_response(
@@ -62,6 +79,15 @@ pub async fn handle_message(
                 },
             )
             .await?;
+
+            messages
+                .send(Message::OutgoingChatMessage(OutgoingChatMessage {
+                    channel: ChatChannel::Global,
+                    sender_id: None,
+                    sender_name: None,
+                    message: welcome_message,
+                }))
+                .await?;
         }
         Err(error) => {
             tracing::info!("{} failed to auth: {}", source, error);
