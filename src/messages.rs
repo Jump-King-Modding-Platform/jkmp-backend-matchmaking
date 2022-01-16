@@ -14,6 +14,7 @@ pub enum Message {
     InformNearbyClients(InformNearbyClients),
     IncomingChatMessage(IncomingChatMessage),
     OutgoingChatMessage(OutgoingChatMessage),
+    ServerStatusUpdate(ServerStatusUpdate),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -58,4 +59,10 @@ pub struct OutgoingChatMessage {
     pub sender_id: Option<u64>,
     pub sender_name: Option<String>,
     pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ServerStatusUpdate {
+    pub total_players: u32,
+    pub group_players: u32,
 }
