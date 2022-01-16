@@ -7,6 +7,7 @@ use tokio::{
     signal,
     sync::{mpsc, Mutex},
 };
+use tokio_cron_scheduler::{Job, JobScheduler};
 use tokio_util::codec::Decoder;
 
 mod codec;
@@ -17,6 +18,8 @@ use messages::Message;
 
 mod state;
 use state::State;
+
+use crate::messages::ServerStatusUpdate;
 
 mod client;
 
@@ -62,6 +65,26 @@ async fn main() -> Result<(), anyhow::Error> {
         options.port
     );
 
+    let mut scheduler = JobScheduler::new();
+    let scheduler_state = state.clone();
+
+    // Broadcast server status once every minute
+    let broadcast_server_status_job = Job::new_async("1/60 * * * * *", move |_uuid, _l| {
+        let state = scheduler_state.clone();
+        Box::pin(async move {
+            if let Err(error) = broadcast_server_update(state).await {
+                tracing::error!(
+                    "An error occured while broadcasting server status: {}",
+                    error
+                );
+            }
+        })
+    })
+    .unwrap();
+    scheduler.add(broadcast_server_status_job).unwrap();
+
+    scheduler.start();
+
     loop {
         tokio::select! {
             result = listener.accept() => match result {
@@ -82,6 +105,33 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing::info!("Server shutting down...");
 
     // todo: send message about shutdown to clients?
+
+    Ok(())
+}
+
+async fn broadcast_server_update(state: Arc<Mutex<State>>) -> Result<(), anyhow::Error> {
+    let state = state.lock().await;
+
+    let clients = state.get_clients_iter();
+    let total_players = clients.len() as u32;
+
+    if total_players == 0 {
+        return Ok(());
+    }
+
+    for client in clients {
+        let group_players = state
+            .get_clients_in_group(state.get_matchmaking_options(client.0))
+            .count() as u32;
+
+        // Ignore failed sends
+        let _ = client
+            .1
+            .send(Message::ServerStatusUpdate(ServerStatusUpdate {
+                total_players,
+                group_players,
+            }));
+    }
 
     Ok(())
 }
