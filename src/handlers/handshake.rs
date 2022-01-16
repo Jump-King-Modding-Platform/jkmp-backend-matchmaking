@@ -12,7 +12,9 @@ use crate::{
     chat::ChatChannel,
     client::{self, Client},
     codec::MessagesCodec,
-    messages::{HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage},
+    messages::{
+        HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage, ServerStatusUpdate,
+    },
     state::{MatchmakingOptions, State},
     steam,
 };
@@ -86,6 +88,15 @@ pub async fn handle_message(
                     sender_id: None,
                     sender_name: None,
                     message: welcome_message,
+                }))
+                .await?;
+
+            messages
+                .send(Message::ServerStatusUpdate(ServerStatusUpdate {
+                    total_players: state.get_clients_iter().len() as u32,
+                    group_players: state
+                        .get_clients_in_group(state.get_matchmaking_options(source))
+                        .count() as u32,
                 }))
                 .await?;
         }
