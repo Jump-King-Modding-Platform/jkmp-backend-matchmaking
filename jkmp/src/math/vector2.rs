@@ -1,16 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Debug, Serialize, Deserialize, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
-}
-
-impl Clone for Vector2 {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 impl Display for Vector2 {

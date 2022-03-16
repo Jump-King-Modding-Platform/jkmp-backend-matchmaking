@@ -40,6 +40,7 @@ struct ErrorResponse {
     description: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct AuthenticateUserTicketParams {

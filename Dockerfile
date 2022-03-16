@@ -31,8 +31,8 @@ COPY --from=builder /etc/group /etc/group
 
 WORKDIR /jkmp
 
-COPY --from=builder /jkmp/target/x86_64-unknown-linux-musl/release/jkmp-backend-matchmaking ./
+COPY --from=builder /jkmp/target/x86_64-unknown-linux-musl/release/server ./
 
 USER jkmp:jkmp
 
-CMD ["/jkmp/jkmp-backend-matchmaking", "--port", "16000"]
+CMD ["/jkmp/server", "--port", "16000"]

@@ -17,8 +17,8 @@ pub struct MessagesCodec {
     >,
 }
 
-impl MessagesCodec {
-    pub fn new() -> Self {
+impl Default for MessagesCodec {
+    fn default() -> Self {
         Self {
             options: DefaultOptions::new()
                 .with_little_endian()

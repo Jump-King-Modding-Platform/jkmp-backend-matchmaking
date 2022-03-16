@@ -61,6 +61,7 @@ impl State {
         self.clients.iter()
     }
 
+    #[allow(dead_code)]
     pub fn get_clients_iter_mut(&mut self) -> IterMut<SocketAddr, Client> {
         self.clients.iter_mut()
     }

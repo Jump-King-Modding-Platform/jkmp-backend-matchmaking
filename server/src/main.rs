@@ -10,24 +10,20 @@ use tokio::{
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tokio_util::codec::Decoder;
 
-mod codec;
-use codec::MessagesCodec;
-
-mod messages;
-use messages::Message;
+use jkmp::{
+    chat, codec,
+    codec::MessagesCodec,
+    math, messages,
+    messages::{Message, ServerStatusUpdate},
+};
 
 mod state;
 use state::State;
-
-use crate::messages::ServerStatusUpdate;
 
 mod client;
 
 mod handlers;
 
-mod chat;
-mod encoding;
-mod math;
 mod steam;
 mod util;
 
@@ -139,7 +135,7 @@ async fn broadcast_server_update(state: Arc<Mutex<State>>) -> Result<(), anyhow:
 #[tracing::instrument(skip(socket, state))]
 async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex<State>>) {
     let (tx, mut rx) = mpsc::unbounded_channel::<MessageType>();
-    let mut messages = MessagesCodec::new().framed(socket);
+    let mut messages = MessagesCodec::default().framed(socket);
 
     match messages.next().await {
         Some(Ok(message)) => match message {
