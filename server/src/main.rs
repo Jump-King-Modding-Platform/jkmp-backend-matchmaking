@@ -1,5 +1,6 @@
 use server::{listener::Listener, steam::SteamAuthBackend};
 use structopt::StructOpt;
+use tokio::sync::mpsc;
 
 #[derive(StructOpt)]
 #[structopt(
@@ -23,7 +24,7 @@ async fn main() -> Result<(), anyhow::Error> {
     Listener::default()
         .host(options.host)
         .port(options.port)
-        .listen::<SteamAuthBackend>()
+        .listen::<SteamAuthBackend>(mpsc::channel::<()>(1).1)
         .await?;
 
     Ok(())

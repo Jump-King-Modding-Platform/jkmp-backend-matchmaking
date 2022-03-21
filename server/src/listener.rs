@@ -44,7 +44,10 @@ impl Listener {
         self
     }
 
-    pub async fn listen<AB: AuthBackend>(&mut self) -> anyhow::Result<()> {
+    pub async fn listen<AB: AuthBackend>(
+        &mut self,
+        mut cancel_rx: mpsc::Receiver<()>,
+    ) -> anyhow::Result<()> {
         AB::check_credentials().await?;
 
         let listener = TcpListener::bind(format!("{}:{}", self.host, self.port)).await?;
@@ -84,10 +87,13 @@ impl Listener {
                     Ok((socket, address)) => {
                         let state = self.state.clone();
                         tokio::spawn(async move {
-                            process_client(socket, address, state).await;
+                            process_client::<AB>(socket, address, state).await;
                         });
                     }
                 },
+                _ = cancel_rx.recv() => {
+                    break;
+                }
                 _ = signal::ctrl_c() => {
                     break;
                 }
@@ -130,7 +136,11 @@ async fn broadcast_server_update(state: Arc<Mutex<State>>) -> Result<(), anyhow:
 }
 
 #[tracing::instrument(skip(socket, state))]
-async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex<State>>) {
+async fn process_client<AB: AuthBackend>(
+    socket: TcpStream,
+    address: SocketAddr,
+    state: Arc<Mutex<State>>,
+) {
     let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
     let mut messages = MessagesCodec::default().framed(socket);
 
@@ -138,7 +148,8 @@ async fn process_client(socket: TcpStream, address: SocketAddr, state: Arc<Mutex
         Some(Ok(message)) => match message {
             Message::HandshakeRequest(request) => {
                 if let Err(error) =
-                    handshake::handle_message(&request, tx, &mut messages, &address, &state).await
+                    handshake::handle_message::<AB>(&request, tx, &mut messages, &address, &state)
+                        .await
                 {
                     tracing::warn!("An error occurred while handling handshake: {:?}", error);
                     return;
