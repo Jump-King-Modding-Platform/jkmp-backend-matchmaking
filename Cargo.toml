@@ -1,2 +1,2 @@
 [workspace]
-members = ["jkmp", "server"]
+members = ["jkmp", "server", "server_tests"]
