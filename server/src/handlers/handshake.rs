@@ -9,6 +9,7 @@ use tokio::{
 use tokio_util::codec::Framed;
 
 use crate::{
+    auth_backend::AuthBackend,
     chat::ChatChannel,
     client::{self, Client},
     codec::MessagesCodec,
@@ -16,7 +17,7 @@ use crate::{
         HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage, ServerStatusUpdate,
     },
     state::{MatchmakingOptions, State},
-    steam,
+    steam::SteamAuthBackend,
 };
 
 pub async fn handle_message(
@@ -38,17 +39,15 @@ pub async fn handle_message(
         anyhow::bail!("Client version {} mismatch", message.version);
     }
 
-    match steam::verify_user_auth_ticket(&message.auth_session_ticket).await {
-        Ok(ids) => {
-            let user_infos = steam::get_player_summaries(vec![ids.steam_id]).await?;
-            let user_info = user_infos
-                .get(&ids.steam_id)
+    match SteamAuthBackend::verify_auth_ticket(&message.auth_session_ticket).await {
+        Ok(steam_id) => {
+            let user_names = SteamAuthBackend::get_player_names(&[steam_id]).await?;
+            let name = user_names
+                .get(&steam_id)
                 .context("Could not get user info from steam")?;
 
-            let name = &user_info.name;
-
             let mut state = state.lock().await;
-            let client = Client::new(tx, ids.steam_id, name.clone(), message.position);
+            let client = Client::new(tx, steam_id, name.clone(), message.position);
             tracing::info!("{} connected", client);
 
             let matchmaking_options = MatchmakingOptions::new(

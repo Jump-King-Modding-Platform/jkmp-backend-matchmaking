@@ -1,8 +1,9 @@
-use std::{collections::HashMap, fmt::Display};
-
+use crate::auth_backend::AuthBackend;
 use anyhow::Context;
+use async_trait::async_trait;
 use reqwest::{RequestBuilder, StatusCode};
 use serde::{self, Deserialize};
+use std::{collections::HashMap, fmt::Display};
 
 const APP_ID: u32 = 1061090;
 const URL_AUTH_USER_TICKET: &str =
@@ -56,7 +57,7 @@ struct AuthenticateUserTicketParams {
 }
 
 #[derive(Debug)]
-pub struct UserSteamId {
+struct UserSteamId {
     pub steam_id: u64,
     pub owner_steam_id: u64,
 }
@@ -88,8 +89,9 @@ struct ReqPlayerSummary {
     name: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
-pub struct PlayerSummary {
+struct PlayerSummary {
     pub steam_id: u64,
     pub name: String,
 }
@@ -101,7 +103,7 @@ impl PlayerSummary {
 }
 
 /// Verifies the user auth ticket and if successful returns the user steam id and owner id (owner id is different if the game is family shared)
-pub async fn verify_user_auth_ticket(ticket: &[u8]) -> Result<UserSteamId, anyhow::Error> {
+async fn verify_user_auth_ticket(ticket: &[u8]) -> Result<UserSteamId, anyhow::Error> {
     let client = create_client()?;
     let ticket_str: String = hex::encode(&ticket);
 
@@ -162,8 +164,8 @@ fn create_request(
         .query(&[("key", &steam_api_key)]))
 }
 
-pub async fn get_player_summaries(
-    user_ids: Vec<u64>,
+async fn get_player_summaries(
+    user_ids: &[u64],
 ) -> Result<HashMap<u64, PlayerSummary>, anyhow::Error> {
     let client = create_client()?;
     let mut builder = create_request(reqwest::Method::GET, &client, URL_GET_PLAYER_SUMMARIES)?;
@@ -203,5 +205,22 @@ pub async fn get_player_summaries(
             }
         }
         default => anyhow::bail!("Unexpected response: {}", default),
+    }
+}
+
+pub struct SteamAuthBackend;
+
+#[async_trait]
+impl AuthBackend for SteamAuthBackend {
+    async fn verify_auth_ticket(ticket: &[u8]) -> anyhow::Result<u64> {
+        Ok(verify_user_auth_ticket(ticket).await?.steam_id)
+    }
+
+    async fn get_player_names(ids: &[u64]) -> anyhow::Result<HashMap<u64, String>> {
+        Ok(get_player_summaries(ids)
+            .await?
+            .into_iter()
+            .map(|x| (x.0, x.1.name))
+            .collect())
     }
 }

@@ -24,6 +24,8 @@ mod client;
 
 mod handlers;
 
+mod auth_backend;
+
 mod steam;
 mod util;
 
