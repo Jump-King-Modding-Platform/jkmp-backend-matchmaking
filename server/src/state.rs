@@ -1,3 +1,5 @@
+use crate::client::Client;
+use jkmp::math::Vector2;
 use std::{
     collections::{
         hash_map::{Iter, IterMut},
@@ -7,8 +9,7 @@ use std::{
     net::SocketAddr,
 };
 
-use crate::{client::Client, math::Vector2};
-
+#[derive(Default)]
 pub struct State {
     clients: HashMap<SocketAddr, Client>,
     matchmaking_map: HashMap<MatchmakingOptions, Vec<SocketAddr>>,

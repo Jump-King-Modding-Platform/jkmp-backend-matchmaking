@@ -1,24 +1,24 @@
-use std::{net::SocketAddr, sync::Arc};
-
+use crate::{
+    auth_backend::AuthBackend,
+    client::{self, Client},
+    state::{MatchmakingOptions, State},
+    steam::SteamAuthBackend,
+};
 use anyhow::Context;
 use futures::SinkExt;
+use jkmp::{
+    chat::ChatChannel,
+    codec::MessagesCodec,
+    messages::{
+        HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage, ServerStatusUpdate,
+    },
+};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{
     net::TcpStream,
     sync::{mpsc, Mutex},
 };
 use tokio_util::codec::Framed;
-
-use crate::{
-    auth_backend::AuthBackend,
-    chat::ChatChannel,
-    client::{self, Client},
-    codec::MessagesCodec,
-    messages::{
-        HandshakeRequest, HandshakeResponse, Message, OutgoingChatMessage, ServerStatusUpdate,
-    },
-    state::{MatchmakingOptions, State},
-    steam::SteamAuthBackend,
-};
 
 pub async fn handle_message(
     message: &HandshakeRequest,

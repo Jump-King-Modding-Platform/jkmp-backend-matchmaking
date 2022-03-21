@@ -1,17 +1,13 @@
-use std::{net::SocketAddr, sync::Arc};
-
+use crate::{client::Client, state::State, util::string::truncate};
 use anyhow::Context;
-use tokio::{net::TcpStream, sync::Mutex};
-use tokio_util::codec::Framed;
-
-use crate::{
+use jkmp::{
     chat::ChatChannel,
-    client::Client,
     codec::MessagesCodec,
     messages::{IncomingChatMessage, Message, OutgoingChatMessage},
-    state::State,
-    util::string::truncate,
 };
+use std::{net::SocketAddr, sync::Arc};
+use tokio::{net::TcpStream, sync::Mutex};
+use tokio_util::codec::Framed;
 
 pub async fn handle_message(
     message: &IncomingChatMessage,

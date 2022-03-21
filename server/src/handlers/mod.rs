@@ -1,9 +1,8 @@
+use crate::state::State;
+use jkmp::{codec::MessagesCodec, messages::Message};
 use std::{net::SocketAddr, sync::Arc};
-
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_util::codec::Framed;
-
-use crate::{codec::MessagesCodec, messages::Message, state::State};
 
 pub mod handshake;
 pub mod incoming_chat_message;

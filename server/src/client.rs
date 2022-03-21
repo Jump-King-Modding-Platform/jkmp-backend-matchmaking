@@ -1,13 +1,11 @@
+use jkmp::{math::Vector2, messages::Message};
 use std::fmt::Display;
-
 use tokio::sync::mpsc::{self, error::SendError};
-
-use crate::{math::Vector2, messages::Message, MessageType};
 
 pub const VERSION: u32 = 2;
 
 pub struct Client {
-    tx: mpsc::UnboundedSender<MessageType>,
+    tx: mpsc::UnboundedSender<Message>,
     pub steam_id: u64,
     pub name: String,
     pub position: Vector2,
@@ -23,7 +21,7 @@ impl PartialEq for Client {
 
 impl Client {
     pub fn new(
-        tx: mpsc::UnboundedSender<MessageType>,
+        tx: mpsc::UnboundedSender<Message>,
         steam_id: u64,
         name: String,
         position: Vector2,

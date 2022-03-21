@@ -1,10 +1,10 @@
-use std::{net::SocketAddr, sync::Arc};
-
 use anyhow::Context;
+use jkmp::{codec::MessagesCodec, messages::PositionUpdate};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_util::codec::Framed;
 
-use crate::{codec::MessagesCodec, messages::PositionUpdate, state::State};
+use crate::state::State;
 
 pub async fn handle_message(
     message: &PositionUpdate,

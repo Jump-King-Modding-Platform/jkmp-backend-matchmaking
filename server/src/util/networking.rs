@@ -1,12 +1,11 @@
+use crate::client::Client;
 use futures::SinkExt;
-use tokio::net::TcpStream;
-use tokio_util::codec::Framed;
-
-use crate::{
-    client::Client,
+use jkmp::{
     codec::MessagesCodec,
     messages::{InformNearbyClients, Message},
 };
+use tokio::net::TcpStream;
+use tokio_util::codec::Framed;
 
 pub async fn send_nearby_clients(
     except_steam_id: &u64,

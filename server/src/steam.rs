@@ -212,6 +212,12 @@ pub struct SteamAuthBackend;
 
 #[async_trait]
 impl AuthBackend for SteamAuthBackend {
+    async fn check_credentials() -> anyhow::Result<()> {
+        if std::env::var("STEAM_API_KEY").is_err() {
+            anyhow::bail!("Environment variable STEAM_API_KEY is missing");
+        }
+        Ok(())
+    }
     async fn verify_auth_ticket(ticket: &[u8]) -> anyhow::Result<u64> {
         Ok(verify_user_auth_ticket(ticket).await?.steam_id)
     }

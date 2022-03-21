@@ -1,13 +1,9 @@
+use jkmp::{codec::MessagesCodec, messages::SetMatchmakingPassword};
 use std::{net::SocketAddr, sync::Arc};
-
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_util::codec::Framed;
 
-use crate::{
-    codec::MessagesCodec,
-    messages::SetMatchmakingPassword,
-    state::{MatchmakingOptions, State},
-};
+use crate::state::{MatchmakingOptions, State};
 
 pub async fn handle_message(
     message: &SetMatchmakingPassword,
