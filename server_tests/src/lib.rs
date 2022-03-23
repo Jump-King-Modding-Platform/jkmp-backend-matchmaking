@@ -6,7 +6,10 @@ use server::{auth_backend::AuthBackend, listener::Listener};
 use tokio::{net::TcpStream, sync::mpsc};
 use tokio_util::codec::{Decoder, Framed};
 
+pub const INVALID_TICKET: &[u8] = b"gamer";
 pub const VALID_TICKET: &[u8] = b"ticket";
+pub const INVALID_VERSION: u32 = 0;
+pub const VALID_VERSION: u32 = server::client::VERSION;
 
 struct TestAuthBackend;
 

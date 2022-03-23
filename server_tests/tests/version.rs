@@ -1,9 +1,9 @@
 use futures::{SinkExt, StreamExt};
 use jkmp::{
     math::Vector2,
-    messages::{HandshakeRequest, Message},
+    messages::{HandshakeRequest, HandshakeResponse, Message},
 };
-use server_tests::VALID_TICKET;
+use server_tests::{INVALID_TICKET, INVALID_VERSION, VALID_TICKET, VALID_VERSION};
 
 #[tokio::test]
 async fn rejects_invalid_version() -> anyhow::Result<()> {
@@ -16,22 +16,17 @@ async fn rejects_invalid_version() -> anyhow::Result<()> {
             matchmaking_password: None,
             level_name: "game".to_string(),
             position: Vector2 { x: 0.0, y: 0.0 },
-            version: 0,
+            version: INVALID_VERSION,
         }))
         .await?;
 
-    match client.next().await {
-        Some(Ok(Message::HandshakeResponse(response))) => assert!(!response.success),
-        Some(Ok(message)) => anyhow::bail!(
-            "Expected server to return rejection message, got {:?}",
-            message
-        ),
-        Some(Err(error)) => anyhow::bail!(
-            "Expected server to return rejection message, got error: {:?}",
-            error
-        ),
-        _ => anyhow::bail!("Expected server to return rejection message"),
-    }
+    assert!(matches!(
+        client.next().await,
+        Some(Ok(Message::HandshakeResponse(HandshakeResponse {
+            success: false,
+            ..
+        })))
+    ));
 
     cancel_tx.send(()).await?;
     Ok(())
@@ -44,26 +39,21 @@ async fn rejects_invalid_ticket() -> anyhow::Result<()> {
     let mut client = server_tests::connect_client(6961).await?;
     client
         .send(Message::HandshakeRequest(HandshakeRequest {
-            auth_session_ticket: b"gamer".to_vec(),
+            auth_session_ticket: INVALID_TICKET.to_vec(),
             matchmaking_password: None,
             level_name: "game".to_string(),
             position: Vector2 { x: 0.0, y: 0.0 },
-            version: 2,
+            version: VALID_VERSION,
         }))
         .await?;
 
-    match client.next().await {
-        Some(Ok(Message::HandshakeResponse(response))) => assert!(!response.success),
-        Some(Ok(message)) => anyhow::bail!(
-            "Expected server to return rejection message, got {:?}",
-            message
-        ),
-        Some(Err(error)) => anyhow::bail!(
-            "Expected server to return rejection message, got error: {:?}",
-            error
-        ),
-        _ => anyhow::bail!("Expected server to return rejection message"),
-    }
+    assert!(matches!(
+        client.next().await,
+        Some(Ok(Message::HandshakeResponse(HandshakeResponse {
+            success: false,
+            ..
+        })))
+    ));
 
     cancel_tx.send(()).await?;
     Ok(())
@@ -80,22 +70,17 @@ async fn accepts_valid_ticket() -> anyhow::Result<()> {
             matchmaking_password: None,
             level_name: "game".to_string(),
             position: Vector2 { x: 0.0, y: 0.0 },
-            version: 2,
+            version: VALID_VERSION,
         }))
         .await?;
 
-    match client.next().await {
-        Some(Ok(Message::HandshakeResponse(response))) => assert!(response.success),
-        Some(Ok(message)) => anyhow::bail!(
-            "Expected server to return rejection message, got {:?}",
-            message
-        ),
-        Some(Err(error)) => anyhow::bail!(
-            "Expected server to return rejection message, got error: {:?}",
-            error
-        ),
-        _ => anyhow::bail!("Expected server to return rejection message"),
-    }
+    assert!(matches!(
+        client.next().await,
+        Some(Ok(Message::HandshakeResponse(HandshakeResponse {
+            success: true,
+            ..
+        })))
+    ));
 
     cancel_tx.send(()).await?;
     Ok(())
